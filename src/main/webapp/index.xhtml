@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Cadastro de Clientes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+        .grid-container {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .grid-container {
+                grid-template-columns: 25% 74%;
+            }
+        }
+
+        .ui-panelgrid-cell {
+            margin-bottom: 8px !important;
+        }
+    </style>
+</h:head>
+<h:body>
+
+    <div class="grid-container">
+        <p:panel header="Cadastrar Cliente">
+            <h:form id="formRegister">
+                <p:panelGrid columns="1" columnClasses="ui-panelgrid-nopad">
+
+                    <p:outputLabel for="name" value="Nome"/>
+                    <p:inputText id="name" value="#{clientBean.selectedClient.name}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="email" value="E-mail"/>
+                    <p:inputText id="email" value="#{clientBean.selectedClient.email}" type="email" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="telephone" value="Telefone"/>
+                    <p:inputText id="telephone" value="#{clientBean.selectedClient.telephone}"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="zipCode" value="CEP"/>
+                    <p:inputText id="zipCode" value="#{clientBean.selectedClient.zipCode}" required="true"
+                                 style="width: 100%;">
+                        <f:ajax event="blur" listener="#{clientBean.fillAddressByCEP}"
+                                render="address district city state"
+                        />
+                    </p:inputText>
+
+                    <p:outputLabel for="address" value="Endereço"/>
+                    <p:inputText id="address" value="#{clientBean.selectedClient.address}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="district" value="Bairro"/>
+                    <p:inputText id="district" value="#{clientBean.selectedClient.district}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="city" value="Cidade"/>
+                    <p:inputText id="city" value="#{clientBean.selectedClient.city}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="state" value="Estado"/>
+                    <p:inputText id="state" value="#{clientBean.selectedClient.state}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:commandButton value="Salvar" action="#{clientBean.saveClient}"
+                                     update=":formRegister, :formClients" ajax="true" style="margin-top: 10px;"/>
+                </p:panelGrid>
+            </h:form>
+        </p:panel>
+
+        <p:panel header="Lista de Clientes">
+            <h:form id="formClients">
+                <p:dataTable value="#{clientBean.listClients()}" var="client" rows="10" paginator="true"
+                             paginatorPosition="bottom" responsive="true" scrollable="true" scrollWidth="100%">
+                    <p:column headerText="ID" filterBy="#{client.id}" sortBy="#{client.id}">
+                        <h:outputText value="#{client.id}"/>
+                    </p:column>
+                    <p:column headerText="Nome" filterBy="#{client.name}" filterMatchMode="contains"
+                              filterPlaceholder="Filtra por nome">
+                        <h:outputText value="#{client.name}"/>
+                    </p:column>
+                    <p:column headerText="E-mail" filterBy="#{client.email}" filterMatchMode="contains"
+                              filterPlaceholder="Filtra por e-mail">
+                        <h:outputText value="#{client.email}"/>
+                    </p:column>
+                    <p:column headerText="Telefone">
+                        <h:outputText value="#{client.telephone}"/>
+                    </p:column>
+                    <p:column headerText="CEP">
+                        <h:outputText value="#{client.zipCode}"/>
+                    </p:column>
+                    <p:column headerText="Endereço">
+                        <h:outputText value="#{client.address}"/>
+                    </p:column>
+                    <p:column headerText="Cidade">
+                        <h:outputText value="#{client.city}"/>
+                    </p:column>
+                    <p:column headerText="Estado">
+                        <h:outputText value="#{client.state}"/>
+                    </p:column>
+
+                    <p:column headerText="Ações">
+                        <p:commandButton
+                                icon="pi pi-pencil"
+                                ariaLabel="Editar"
+                                onclick="PF('editDialog').show()"
+                                ajax="true"
+                                update=":formUpdateClient">
+                            <f:setPropertyActionListener value="#{client}" target="#{clientBean.selectedClient}"/>
+                        </p:commandButton>
+                        <p:commandButton
+                                styleClass="ui-button-danger"
+                                icon="pi pi-trash"
+                                ariaLabel="Excluir"
+                                action="#{clientBean.deleteClient}"
+                                ajax="true"
+                                update=":formClients"
+                        >
+                            <p:confirm header="Confirmação" message="Deseja realmente excluir este client?"
+                                       icon="pi pi-exclamation-triangle"/>
+                            <f:setPropertyActionListener value="#{client}" target="#{clientBean.selectedClient}"/>
+                        </p:commandButton>
+                    </p:column>
+
+                </p:dataTable>
+                <p:growl showDetail="true"/>
+            </h:form>
+        </p:panel>
+    </div>
+
+    <p:confirmDialog global="true">
+        <p:commandButton value="Não" type="button" styleClass="ui-button-danger ui-confirmdialog-no"
+                         icon="pi pi-times"/>
+        <p:commandButton value="Sim" type="button" styleClass="ui-button-success ui-confirmdialog-yes"
+                         icon="pi pi-check"/>
+    </p:confirmDialog>
+
+    <p:dialog header="Atualização de Clientes" widgetVar="editDialog" modal="true" fitViewport="true"
+              draggable="false" resizable="false">
+        <p:panel header="Editar Dados">
+            <h:form id="formUpdateClient">
+                <h:inputHidden value="#{clientBean.selectedClient.id}"/>
+
+                <p:panelGrid columns="1" columnClasses="ui-panelgrid-nopad">
+
+                    <p:outputLabel for="nameEdit" value="Nome"/>
+                    <p:inputText id="nameEdit" value="#{clientBean.selectedClient.name}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="emailEdit" value="E-mail"/>
+                    <p:inputText id="emailEdit" value="#{clientBean.selectedClient.email}" type="email" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="telephoneEdit" value="Telefone"/>
+                    <p:inputText id="telephoneEdit" value="#{clientBean.selectedClient.telephone}"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="telephoneEdit" value="CEP"/>
+                    <p:inputText id="zipCodeEdit" value="#{clientBean.selectedClient.zipCode}" required="true"
+                                 style="width: 100%;">
+                        <f:ajax event="blur" listener="#{clientBean.fillAddressByCEP}"
+                                render="addressEdit districtEdit cityEdit stateEdit"/>
+                    </p:inputText>
+
+                    <p:outputLabel for="addressEdit" value="Endereço"/>
+                    <p:inputText id="addressEdit" value="#{clientBean.selectedClient.address}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="districtEdit" value="Bairro"/>
+                    <p:inputText id="districtEdit" value="#{clientBean.selectedClient.district}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="cityEdit" value="Cidade"/>
+                    <p:inputText id="cityEdit" value="#{clientBean.selectedClient.city}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:outputLabel for="stateEdit" value="Estado"/>
+                    <p:inputText id="stateEdit" value="#{clientBean.selectedClient.state}" required="true"
+                                 style="width: 100%;"/>
+
+                    <p:commandButton value="Atualizar" action="#{clientBean.updateClient}"
+                                     update=":formRegister, :formClients, :formUpdateClient" ajax="true"
+                                     onclick="PF('ALTERA').hide()" style="margin-top: 10px;"/>
+                </p:panelGrid>
+
+            </h:form>
+        </p:panel>
+    </p:dialog>
+</h:body>
+</html>
